@@ -1,0 +1,12 @@
+name: python-learning
+channels:
+  - conda-forge
+dependencies:
+  - python
+  - numpy
+  - pip
+  - pip:
+    - requests
+    - sphinx-gallery
+    - pandas
+    - matplotlib
