@@ -1,16 +1,15 @@
-from setuptools import setup, Extension
+from setuptools import setup, Extension, find_packages
 
-# Define the Objective-C extension module
-extension_module = Extension(
-    "hello",
-    sources=["hello.m"],
-    extra_link_args=["-framework", "Foundation"],
-    extra_compile_args=["-ObjC"],
+hello_module = Extension(
+    "objc_hello._hello",
+    sources=["src/objc_hello/_hello.m"],
+    language="objc",
 )
 
-# Setup the package
 setup(
-    name="hello",
-    version="1.0",
-    ext_modules=[extension_module],
+    name="objc_hello",
+    version="0.1",
+    packages=find_packages("src"),
+    package_dir={"": "src"},
+    ext_modules=[hello_module],
 )
