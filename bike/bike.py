@@ -21,7 +21,7 @@ from rdhyee_utils.bike.bikeformat import (
 from rdhyee_utils.clipboard.macos import GeneralPasteboard, ptypes
 from appscript import app, k, its
 
-
+#
 DEST_MARKDOWN_FORMAT = "markdown+compact_definition_lists+lists_without_preceding_blankline+wikilinks_title_after_pipe+mark-native_divs-native_spans-header_attributes-link_attributes"
 ONLY_DOC_CHILDREN = True
 
@@ -38,67 +38,73 @@ def merge_consecutive_codeblocks(elem, doc):
     doc.prev_elem = elem
 
 
-bike = Bike()
-# bike.app.activate()
+def bike_selected_to_md():
+    bike = Bike()
+    # bike.app.activate()
 
-d = bike.windows[1].document
-# selected_bike = d.export(from_=d.selection_rows, as_=k.bike_format)
-# etree = ET.fromstring(selected_bike.encode('utf-8'), ET.XMLParser(remove_blank_text=True))
-etree = d.lxml_etree(from_=d.selection_rows)
+    d = bike.windows[1].document
+    # selected_bike = d.export(from_=d.selection_rows, as_=k.bike_format)
+    # etree = ET.fromstring(selected_bike.encode('utf-8'), ET.XMLParser(remove_blank_text=True))
+    etree = d.lxml_etree(from_=d.selection_rows)
 
-# what if I export just the rows under the root ul?
-if ONLY_DOC_CHILDREN:
-    etree2 = etree.findall("ns:body/ns:ul/*", namespaces=namespaces)
-    pfd = bike_etree_list_to_panflute(etree2)
-    pfd = pf.Doc(*pfd)
-else:
-    pfd = bike_etree_to_panflute(etree)
+    # what if I export just the rows under the root ul?
+    if ONLY_DOC_CHILDREN:
+        etree2 = etree.findall("ns:body/ns:ul/*", namespaces=namespaces)
+        pfd = bike_etree_list_to_panflute(etree2)
+        # TO DO: fancier wrapping of items -- for example, there might be ListItems that are not wrapped in a List type of some sort
+        pfd = pf.Doc(*pfd)
+    else:
+        pfd = bike_etree_to_panflute(etree)
 
-pf.run_filter(merge_consecutive_codeblocks, doc=pfd)
-pandoc_json = pfd.to_json()
+    pf.run_filter(merge_consecutive_codeblocks, doc=pfd)
+    pandoc_json = pfd.to_json()
 
-output_md = pypandoc.convert_text(
-    json.dumps(pandoc_json),
-    to=DEST_MARKDOWN_FORMAT,
-    format="json",
-    extra_args=["--wrap=none"],
-    filters=[],
-    # filters=["./change_marker.lua", "./remove_spans.lua"],
-)
-
-sh.pbcopy(_in=output_md)
-
-# write to scratchpad in Obsidian
-
-with open(P.home() / "obsidian/MainRY/ScratchPad.md", "bw") as f:
-    f.write(output_md.encode("utf-8"))
-
-# convert output_md to HTML and write to /tmp/scratchpad.html
-output_html = pypandoc.convert_text(output_md, to="html", format="markdown")
-with open(P("/tmp/ScratchPad.html"), "bw") as f:
-    f.write(output_html.encode("utf-8"))
-
-# convert to docx and write to /tmp/scratchpad.docx
-
-if True:
-    output_docx = pypandoc.convert_text(
-        output_md,
-        to="docx",
-        format="markdown",
-        outputfile=P("/tmp/ScratchPad.docx"),
-        extra_args=["--toc"],
-    )
-else:
-    sh.pandoc(
-        "--toc", _in=output_md, _out="/tmp/ScratchPad.docx", to="docx", f="markdown"
+    output_md = pypandoc.convert_text(
+        json.dumps(pandoc_json),
+        to=DEST_MARKDOWN_FORMAT,
+        format="json",
+        extra_args=["--wrap=none"],
+        filters=[],
+        # filters=["./change_marker.lua", "./remove_spans.lua"],
     )
 
-# convert to PDF and write to /tmp/scratchpad.pdf
-if False:
-    output_pdf = pypandoc.convert_text(
-        output_md,
-        to="pdf",
-        format="markdown",
-        outputfile=("/tmp/ScratchPad.pdf"),
-        extra_args=["--toc"],
-    )
+    sh.pbcopy(_in=output_md)
+
+    # write to scratchpad in Obsidian
+
+    with open(P.home() / "obsidian/MainRY/ScratchPad.md", "bw") as f:
+        f.write(output_md.encode("utf-8"))
+
+    # convert output_md to HTML and write to /tmp/scratchpad.html
+    output_html = pypandoc.convert_text(output_md, to="html", format="markdown")
+    with open(P("/tmp/ScratchPad.html"), "bw") as f:
+        f.write(output_html.encode("utf-8"))
+
+    # convert to docx and write to /tmp/scratchpad.docx
+
+    if True:
+        output_docx = pypandoc.convert_text(
+            output_md,
+            to="docx",
+            format="markdown",
+            outputfile=P("/tmp/ScratchPad.docx"),
+            extra_args=["--toc"],
+        )
+    else:
+        sh.pandoc(
+            "--toc", _in=output_md, _out="/tmp/ScratchPad.docx", to="docx", f="markdown"
+        )
+
+    # convert to PDF and write to /tmp/scratchpad.pdf
+    if False:
+        output_pdf = pypandoc.convert_text(
+            output_md,
+            to="pdf",
+            format="markdown",
+            outputfile=("/tmp/ScratchPad.pdf"),
+            extra_args=["--toc"],
+        )
+
+
+if __name__ == "__main__":
+    bike_selected_to_md()
