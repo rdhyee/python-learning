@@ -9,6 +9,8 @@ import pypandoc
 import sh
 import json
 
+import click
+
 
 from rdhyee_utils.bike import Bike
 
@@ -28,6 +30,7 @@ ONLY_DOC_CHILDREN = True
 
 # https://www.perplexity.ai/search/Write-me-a-MFQekCRfQSyjfylvmBlUng?s=c
 def merge_consecutive_codeblocks(elem, doc):
+    """Merge consecutive code blocks"""
     if (
         isinstance(elem, pf.CodeBlock)
         and doc.prev_elem
@@ -38,19 +41,16 @@ def merge_consecutive_codeblocks(elem, doc):
     doc.prev_elem = elem
 
 
-def bike_selected_to_md():
+def bike_selected_to_md(heading_level):
     bike = Bike()
-    # bike.app.activate()
 
     d = bike.windows[1].document
-    # selected_bike = d.export(from_=d.selection_rows, as_=k.bike_format)
-    # etree = ET.fromstring(selected_bike.encode('utf-8'), ET.XMLParser(remove_blank_text=True))
     etree = d.lxml_etree(from_=d.selection_rows)
 
     # what if I export just the rows under the root ul?
     if ONLY_DOC_CHILDREN:
         etree2 = etree.findall("ns:body/ns:ul/*", namespaces=namespaces)
-        pfd = bike_etree_list_to_panflute(etree2)
+        pfd = bike_etree_list_to_panflute(etree2, heading_level=heading_level)
         # TO DO: fancier wrapping of items -- for example, there might be ListItems that are not wrapped in a List type of some sort
         pfd = pf.Doc(*pfd)
     else:
@@ -106,5 +106,16 @@ def bike_selected_to_md():
         )
 
 
+@click.command()
+@click.option(
+    "--heading_level",
+    envvar="KMVAR_Heading_Level",
+    default=1,
+    help="Heading level to use for the top level of the document.",
+)
+def main(heading_level):
+    bike_selected_to_md(heading_level)
+
+
 if __name__ == "__main__":
-    bike_selected_to_md()
+    main()
