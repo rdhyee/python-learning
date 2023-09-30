@@ -44,7 +44,7 @@ def merge_consecutive_codeblocks(elem, doc):
 def bike_selected_to_md(heading_level):
     bike = Bike()
 
-    d = bike.windows[1].document
+    d = bike.windows[0].document
     etree = d.lxml_etree(from_=d.selection_rows)
 
     # what if I export just the rows under the root ul?
@@ -106,14 +106,19 @@ def bike_selected_to_md(heading_level):
         )
 
 
-@click.command()
+@click.group()
+def main():
+    pass
+
+
+@main.command()
 @click.option(
     "--heading_level",
     envvar="KMVAR_Heading_Level",
     default=1,
     help="Heading level to use for the top level of the document.",
 )
-def main(heading_level):
+def sel2pb(heading_level):
     bike_selected_to_md(heading_level)
 
 
