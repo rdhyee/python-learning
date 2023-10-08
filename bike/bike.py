@@ -22,6 +22,7 @@ from rdhyee_utils.bike.bikeformat import (
     namespaces,
     bike_etree_to_panflute,
     bike_etree_list_to_panflute,
+    panflute_to_bike_etree
 )
 
 from rdhyee_utils.clipboard.macos import GeneralPasteboard, ptypes
@@ -149,27 +150,28 @@ def sel2pb(heading_level):
 @main.command()
 @click.argument('args', nargs=-1)
 @click.option('-t', '--to', default=DEST_MARKDOWN_FORMAT, help='Output format')
+@click.option('-f', '--from', 'from_', default=None, help='Input format')
+@click.option('-o', '--output', 'output_path', default=None, help='Output path')
 @click.pass_context
-def pandoc(ctx, args, to):
+def pandoc(ctx, args, to, from_, output_path):
     kwargs = {
         'stdin': click.get_text_stream('stdin'),
         'stdout': click.get_text_stream('stdout')
     }
-    # print("hello from bike pandoc")
-    # print("args:", args)
-    # print("kwargs:", kwargs)
-    # print("to:", to)
 
-    # inputs: start with: stdin, input_path, 
+    # figure out the input.
 
     data = None
+
 
     if len(args) > 0:
         input_path = args[0]
         data = open(input_path, 'rb').read()
+        if from_ is None:
+            from_ = input_path.split(".")[-1]
     elif check_stdin(kwargs['stdin']):
         data = sys.stdin.read()
-    
+
     # if no data yet, check for clipboard
     if data is None or len(data) == 0:
         pb = GeneralPasteboard()
@@ -179,18 +181,35 @@ def pandoc(ctx, args, to):
     if data is None or len(data) == 0:
         return
     
-    etree = ET.fromstring(data, ET.XMLParser(remove_blank_text=True))
-    pfd = etree_to_panflute(etree, only_doc_children=False)
+    if from_ is None:
+        raise Exception("Need to specify --from")
 
-    # then convert to to format
-    output = pypandoc.convert_text(json.dumps(pfd.to_json()), to=to, format="json")
+    # convert to the json format first if from_ is bike or to is bike
+    if from_ == "bike" or to == "bike":
+        etree = ET.fromstring(data, ET.XMLParser(remove_blank_text=True))
+        pfd = etree_to_panflute(etree, only_doc_children=False)
+        from_ = "json"
+        data = pfd.to_json()
+
+    # if to is bike, then convert to bike
+    if to == "bike":
+        etree = panflute_to_bike_etree(data)
+        output = ET.tostring(etree, pretty_print=True).decode("utf-8")
+        if output_path is not None:
+            open(output_path, "w", encoding="utf-8").write(output)
+        else:
+            stdout = kwargs['stdout']
+            stdout.write(output)
+        return
+
     
-    # if there is a second argument, assume it's a file
-    if len(args) > 1:
-        output_path = args[1]
-        open(output_path, "w", encoding="utf-8").write(output)
+    # if output_path is specified, write to that file
+    if output_path is not None:
+        output = pypandoc.convert_text(json.dumps(data), to=to, format=from_, outputfile=output_path)
+        # open(output_path, "w", encoding="utf-8").write(output)
     else:
         # otherwise, write to stdout
+        output = pypandoc.convert_text(json.dumps(data), to=to, format=from_)
         stdout = kwargs['stdout']
         stdout.write(output)
 
