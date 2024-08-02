@@ -53,7 +53,7 @@ def compare_documents(original_doc_path, modified_doc_path):
         # Set up the arguments for the compare command
         args = (
             PropertyValue("URL", 0, modified_url, 0),
-            PropertyValue("Filter", 0, "MS Word 2007 XML", 0)  # Use this for .docx files
+            # PropertyValue("Filter", 0, "MS Word 2007 XML", 0)  # Use this for .docx files
         )
 
         # Execute the compare command
