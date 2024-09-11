@@ -11,6 +11,7 @@ import psutil
 import time
 import sys
 
+
 def is_libreoffice_running():
     for proc in psutil.process_iter(['name', 'cmdline']):
         try:
@@ -24,6 +25,7 @@ def is_libreoffice_running():
             pass
     return False
 
+
 def start_libreoffice():
     cmd = 'soffice --accept="socket,host=localhost,port=2002;urp;StarOffice.ServiceManager"'
     if sys.platform == 'darwin':  # macOS
@@ -32,6 +34,7 @@ def start_libreoffice():
         subprocess.Popen(cmd, shell=True, start_new_session=True, stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
     except subprocess.SubprocessError as e:
         print(f"Error starting LibreOffice: {e}")
+
 
 def ensure_libreoffice_running():
     if not is_libreoffice_running():
@@ -45,6 +48,7 @@ def ensure_libreoffice_running():
         print("Failed to start LibreOffice.")
     else:
         print("LibreOffice is already running.")
+
 
 if __name__ == "__main__":
     ensure_libreoffice_running()

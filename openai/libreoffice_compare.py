@@ -15,14 +15,29 @@ import uno
 import sys
 import os
 from com.sun.star.beans import PropertyValue
+from pathlib import Path
+
 
 def convert_to_url(path):
-    if path.startswith("file://"):
-        return path
-    return "file://" + path.replace("\\", "/")
+    # Ensure path is a pathlib.Path object
+    if not isinstance(path, Path):
+        path = Path(path)
+    
+    # Convert to absolute path
+    path = path.resolve()
+    
+    # Convert to URL
+    # deal with spaces and other special characters in the path
+
+    path_str = str(path)
+    if path_str.startswith("file://"):
+        return path_str
+    return "file://" + path_str.replace("\\", "/").replace(" ", "%20")
+
 
 def file_exists(path):
     return os.path.exists(path)
+
 
 def compare_documents(original_doc_path, modified_doc_path):
     try:
@@ -45,25 +60,32 @@ def compare_documents(original_doc_path, modified_doc_path):
         modified_url = convert_to_url(modified_doc_path)
 
         # Open the original document
-        original_doc = desktop.loadComponentFromURL(original_url, "_blank", 0, ())
+        # original_doc = desktop.loadComponentFromURL(original_url, "_blank", 0, ())
+
+        # Open the modified document
+        modified_doc = desktop.loadComponentFromURL(modified_url, "_blank", 0, ())
+
 
         # Create the dispatch helper
         dispatch_helper = smgr.createInstanceWithContext("com.sun.star.frame.DispatchHelper", ctx)
 
         # Set up the arguments for the compare command
         args = (
-            PropertyValue("URL", 0, modified_url, 0),
-            # PropertyValue("Filter", 0, "MS Word 2007 XML", 0)  # Use this for .docx files
+            PropertyValue("URL", 0, original_url, 0),
         )
 
         # Execute the compare command
-        dispatch_helper.executeDispatch(original_doc.getCurrentController().getFrame(), ".uno:CompareDocuments", "", 0, args)
+        dispatch_helper.executeDispatch(modified_doc.getCurrentController().getFrame(), ".uno:CompareDocuments", "", 0, args)
 
         print("Document comparison completed successfully.")
 
         # Optionally, you can save and close the document here
         # original_doc.store()
         # original_doc.close(True)
+
+        # save the file as ODT format
+        modified_doc.storeAsURL(convert_to_url("/Users/raymondyee/Library/CloudStorage/GoogleDrive-raymond.yee@gmail.com/My Drive/tmp/output.odt"), ())
+
 
     except Exception as e:
         print(f"An error occurred: {str(e)}")
