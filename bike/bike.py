@@ -22,7 +22,10 @@ from rdhyee_utils.bike.bikeformat import (
     namespaces,
     bike_etree_to_panflute,
     bike_etree_list_to_panflute,
-    panflute_to_bike_etree
+    panflute_to_bike_etree,
+    merge_consecutive_codeblocks,
+    etree_to_panflute,
+    ONLY_DOC_CHILDREN
 )
 
 from rdhyee_utils.clipboard.macos import GeneralPasteboard, ptypes
@@ -33,7 +36,7 @@ SOURCE_MARKDOWN_FORMAT = (
     "markdown+lists_without_preceding_blankline+wikilinks_title_after_pipe+mark"
 )
 DEST_MARKDOWN_FORMAT = "markdown+lists_without_preceding_blankline+wikilinks_title_after_pipe+mark-native_divs-native_spans-header_attributes-link_attributes"
-ONLY_DOC_CHILDREN = True
+# ONLY_DOC_CHILDREN = True
 
 
 # https://stackoverflow.com/a/3763257/7782
@@ -50,29 +53,29 @@ def check_stdin(stdin=sys.stdin):
 
 
 # https://www.perplexity.ai/search/Write-me-a-MFQekCRfQSyjfylvmBlUng?s=c
-def merge_consecutive_codeblocks(elem, doc):
-    """Merge consecutive code blocks"""
-    if (
-        isinstance(elem, pf.CodeBlock)
-        and doc.prev_elem
-        and isinstance(doc.prev_elem, pf.CodeBlock)
-    ):
-        doc.prev_elem.text += "\n" + elem.text
-        return []
-    doc.prev_elem = elem
+# def merge_consecutive_codeblocks(elem, doc):
+#     """Merge consecutive code blocks"""
+#     if (
+#         isinstance(elem, pf.CodeBlock)
+#         and doc.prev_elem
+#         and isinstance(doc.prev_elem, pf.CodeBlock)
+#     ):
+#         doc.prev_elem.text += "\n" + elem.text
+#         return []
+#     doc.prev_elem = elem
 
 
-def etree_to_panflute(etree, only_doc_children=ONLY_DOC_CHILDREN):
-    if only_doc_children:
-        etree2 = etree.findall("ns:body/ns:ul/*", namespaces=namespaces)
-        pfd = bike_etree_list_to_panflute(etree2)
-        # TO DO: fancier wrapping of items -- for example, there might be ListItems that are not wrapped in a List type of some sort
-        pfd = pf.Doc(*pfd)
-    else:
-        pfd = bike_etree_to_panflute(etree)
+# def etree_to_panflute(etree, only_doc_children=ONLY_DOC_CHILDREN):
+#     if only_doc_children:
+#         etree2 = etree.findall("ns:body/ns:ul/*", namespaces=namespaces)
+#         pfd = bike_etree_list_to_panflute(etree2)
+#         # TO DO: fancier wrapping of items -- for example, there might be ListItems that are not wrapped in a List type of some sort
+#         pfd = pf.Doc(*pfd)
+#     else:
+#         pfd = bike_etree_to_panflute(etree)
 
-    pf.run_filter(merge_consecutive_codeblocks, doc=pfd)
-    return pfd
+#     pf.run_filter(merge_consecutive_codeblocks, doc=pfd)
+#     return pfd
 
 
 def bike_selected_to_md(heading_level):
